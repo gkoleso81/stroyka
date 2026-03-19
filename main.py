@@ -4,7 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 import uuid
-
+import json
 # --- НАСТРОЙКИ ---
 SHEET_URL = "https://docs.google.com/spreadsheets/d/16Pfa9dJhOPlPU7zfNp7x5IRBKwuMpPb4XX5OpDmcGv8/edit?pli=1&gid=0#gid=0"
 CREDENTIALS_FILE = "credentials.json"
@@ -16,20 +16,23 @@ FOREMEN = ["Иванов", "Петров", "Сидоров", "Кузнецов",
 @st.cache_resource
 # --- ПОДКЛЮЧЕНИЕ (УНИВЕРСАЛЬНОЕ) ---
 @st.cache_resource
+# --- ПОДКЛЮЧЕНИЕ (УНИВЕРСАЛЬНОЕ) ---
+@st.cache_resource
 def get_client():
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     
-    # 1. Пробуем найти ключ в Секретах Облака (для Streamlit Cloud)
-    if "gcp_service_account" in st.secrets:
-        creds_dict = st.secrets["gcp_service_account"]
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    # ВАРИАНТ 1: Мы в Облаке (Streamlit Cloud)
+    # Ищем переменную "my_key" в секретах
+    if "my_key" in st.secrets:
+        # Превращаем текст обратно в словарь
+        key_dict = json.loads(st.secrets["my_key"])
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(key_dict, scope)
     
-    # 2. Если секретов нет, ищем файл на компьютере (для локального запуска)
+    # ВАРИАНТ 2: Мы на компьютере (Локально)
     else:
         creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
         
     return gspread.authorize(creds)
-
 # --- ЗАГРУЗКА ДАННЫХ (УМНАЯ) ---
 @st.cache_data(ttl=600) # Обновляем каждые 10 мин
 def load_data():
