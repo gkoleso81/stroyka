@@ -18,18 +18,21 @@ FOREMEN = ["Иванов", "Петров", "Сидоров", "Кузнецов",
 @st.cache_resource
 # --- ПОДКЛЮЧЕНИЕ (УНИВЕРСАЛЬНОЕ) ---
 @st.cache_resource
+# В самом верху файла добавь:
+import json 
+
+# --- ПОДКЛЮЧЕНИЕ ---
+@st.cache_resource
 def get_client():
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     
-    # ВАРИАНТ 1: Мы в Облаке (Streamlit Cloud)
-    # Ищем переменную "my_key" в секретах
-    if "my_key" in st.secrets:
+    # Пытаемся получить ключ как текст из секретов
+    if "google_key" in st.secrets:
         # Превращаем текст обратно в словарь
-        key_dict = json.loads(st.secrets["my_key"])
+        key_dict = json.loads(st.secrets["google_key"])
         creds = ServiceAccountCredentials.from_json_keyfile_dict(key_dict, scope)
-    
-    # ВАРИАНТ 2: Мы на компьютере (Локально)
     else:
+        # Если секретов нет, ищем файл (для запуска на компьютере)
         creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
         
     return gspread.authorize(creds)
